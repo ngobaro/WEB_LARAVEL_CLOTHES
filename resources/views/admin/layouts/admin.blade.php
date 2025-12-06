@@ -64,7 +64,7 @@
             <a href="{{ route('admin.discounts.index') }}" class="{{ request()->is('admin/discounts*') ? 'active' : '' }}">
                 <i class="fas fa-tag"></i> <span>Giảm giá</span>
             </a>
-            <a href="" class="{{ request()->is('admin/payments*') ? 'active' : '' }}">
+            <a href="{{ route('admin.payments.index') }}" class="{{ request()->is('admin/payments*') ? 'active' : '' }}">
                 <i class="fas fa-credit-card"></i> <span>Thanh toán</span>
             </a>
             <a href="" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}">
