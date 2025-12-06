@@ -58,7 +58,7 @@
             <a href="{{ route('admin.products.index') }}" class="{{ request()->is('admin/products*') ? 'active' : '' }}">
                 <i class="fas fa-box"></i> <span>Sản Phẩm</span>
             </a>
-            <a href="" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">
                 <i class="fas fa-shopping-bag"></i> <span>Đơn Hàng</span>
             </a>
             <a href="" class="{{ request()->is('admin/discounts*') ? 'active' : '' }}">

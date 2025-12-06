@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendOTP;
 
-class OtpController extends Controller
+class LoginController extends Controller
 {
     /**
      * Hiển thị form đăng nhập (email + password).
