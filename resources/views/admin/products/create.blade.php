@@ -1,77 +1,101 @@
-@extends('layouts.admin')
+@extends('admin.layouts.admin')
 
 @section('content')
-<h2>Thêm Đơn Hàng Mới</h2>
+<div class="card">
+    <div class="card-header">
+        <h4>Thêm Sản Phẩm Mới</h4>
+    </div>
+    <div class="card-body">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-<form action="{{ route('admin.orders.store') }}" method="POST">
-    @csrf
-    <div class="mb-3">
-        <label class="form-label">User</label>
-        <select name="user_id" class="form-control @error('user_id') is-invalid @enderror" required>
-            <option value="">Chọn User</option>
-            @foreach ($users as $user)
-                <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                    {{ $user->name }} ({{ $user->email }})
-                </option>
-            @endforeach
-        </select>
-        @error('user_id')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+        <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Tên Sản Phẩm <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
+                           value="{{ old('name') }}" required>
+                    @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                    <input type="number" name="price" class="form-control @error('price') is-invalid @enderror" 
+                           value="{{ old('price') }}" required min="0" step="1000">
+                    @error('price')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Mô Tả <span class="text-danger">*</span></label>
+                    <textarea name="description" class="form-control @error('description') is-invalid @enderror" 
+                              rows="4" required>{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Số Lượng Tồn Kho <span class="text-danger">*</span></label>
+                    <input type="number" name="stock" class="form-control @error('stock') is-invalid @enderror" 
+                           value="{{ old('stock') }}" required min="0">
+                    @error('stock')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Hình Ảnh</label>
+                    <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" 
+                           accept="image/*">
+                    @error('image')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <small class="text-muted">Chấp nhận: JPG, PNG, GIF, WebP (tối đa 5MB)</small>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Mã Giảm Giá (Tùy Chọn)</label>
+                    <select name="discount_id" class="form-control">
+                        <option value="">Không có giảm giá</option>
+                        @foreach ($discounts as $discount)
+                            <option value="{{ $discount->id }}" {{ old('discount_id') == $discount->id ? 'selected' : '' }}>
+                                {{ $discount->code }} 
+                                @if($discount->type == 'percent')
+                                    ({{ $discount->value }}%)
+                                @else
+                                    ({{ number_format($discount->value, 0, ',', '.') }} VNĐ)
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('discount_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Thêm Sản Phẩm
+                </button>
+                <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay Lại
+                </a>
+            </div>
+        </form>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Tổng Tiền (VNĐ)</label>
-        <input type="number" name="total_amount" class="form-control @error('total_amount') is-invalid @enderror" value="{{ old('total_amount') }}" required min="0">
-        @error('total_amount')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Giảm Giá (Tùy Chọn)</label>
-        <select name="discount_id" class="form-control">
-            <option value="">Không</option>
-            @foreach ($discounts as $discount)
-                <option value="{{ $discount->id }}" {{ old('discount_id') == $discount->id ? 'selected' : '' }}>
-                    {{ $discount->code }} ({{ $discount->type }}: {{ $discount->value }})
-                </option>
-            @endforeach
-        </select>
-        @error('discount_id')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Trạng Thái</label>
-        <select name="status" class="form-control @error('status') is-invalid @enderror" required>
-            <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-            <option value="paid" {{ old('status') == 'paid' ? 'selected' : '' }}>Paid</option>
-            <option value="shipped" {{ old('status') == 'shipped' ? 'selected' : '' }}>Shipped</option>
-            <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-        </select>
-        @error('status')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Phương Thức Thanh Toán</label>
-        <select name="payment_method" class="form-control">
-            <option value="">Không</option>
-            <option value="momo" {{ old('payment_method') == 'momo' ? 'selected' : '' }}>MoMo</option>
-            <option value="stripe" {{ old('payment_method') == 'stripe' ? 'selected' : '' }}>Stripe</option>
-            <option value="cod" {{ old('payment_method') == 'cod' ? 'selected' : '' }}>COD</option>
-        </select>
-        @error('payment_method')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-    <div class="mb-3">
-        <label class="form-label">ID Thanh Toán (Tùy Chọn)</label>
-        <input type="text" name="payment_id" class="form-control" value="{{ old('payment_id') }}">
-        @error('payment_id')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-    <button type="submit" class="btn btn-primary">Thêm Đơn Hàng</button>
-    <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary">Hủy</a>
-</form>
+</div>
 @endsection
