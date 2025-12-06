@@ -61,6 +61,15 @@
             <a href="" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">
                 <i class="fas fa-shopping-bag"></i> <span>Đơn Hàng</span>
             </a>
+            <a href="" class="{{ request()->is('admin/discounts*') ? 'active' : '' }}">
+                <i class="fas fa-tag"></i> <span>Giảm giá</span>
+            </a>
+            <a href="" class="{{ request()->is('admin/payments*') ? 'active' : '' }}">
+                <i class="fas fa-credit-card"></i> <span>Thanh toán</span>
+            </a>
+            <a href="" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}">
+                <i class="fas fa-star"></i> <span>Đánh giá</span>
+            </a>
             <a href="" class="{{ request()->is('admin/users*') ? 'active' : '' }}">
                 <i class="fas fa-users"></i> <span>Người Dùng</span>
             </a>

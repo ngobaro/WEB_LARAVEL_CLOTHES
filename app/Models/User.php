@@ -50,11 +50,13 @@ class User extends Authenticatable
     }
 
     // Helper kiểm tra OTP hợp lệ
-    public function verifyOtp($code)
+    public function verifyOtp($otp)
     {
-        return $this->otp_code === $code && $this->otp_expires > now();
+        if ($this->otp_code == $otp && $this->otp_expires > now()) {
+            return true;
+        }
+        return false;
     }
-
     // Helper kiểm tra role
     
     public function hasRole($role)

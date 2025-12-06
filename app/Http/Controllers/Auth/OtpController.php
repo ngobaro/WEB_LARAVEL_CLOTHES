@@ -3,94 +3,139 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\SendOTP;  // Import Mailable SendOTP (nếu có, nếu chưa tạo thì dùng raw dưới)
+use App\Mail\SendOTP;
 
 class OtpController extends Controller
 {
-    // Form đăng nhập (email + pass)
+    /**
+     * Hiển thị form đăng nhập (email + password).
+     *
+     * @return \Illuminate\View\View
+     */
     public function showForm()
     {
-        return view('auth.login');
+        return view('auth.login');  // Trả về view đăng nhập
     }
 
-    // Attempt login (validate email/pass, nếu đúng thì gửi OTP)
-    public function loginAttempt(LoginRequest $request)
-    {
-       
-        if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            return back()->with('error', 'Email hoặc mật khẩu sai!');
-        }
-
-        $user = Auth::user();  // Login tạm thành công
-
-        $otp = rand(100000, 999999);
-        $user->otp_code = $otp;
-        $user->otp_expires = now()->addMinutes(5);
-        $user->save();
-
-        session(['email' => $request->email]);
-
-        // Gửi mail OTP (dùng Mailable SendOTP nếu có, hoặc raw)
-        Mail::to($user->email)->send(new SendOTP($user, $otp));  // Nếu có Mailable
-        // Hoặc raw nếu chưa tạo Mailable:
-        // Mail::raw("Mã OTP của bạn là: {$otp}. Hết hạn sau 5 phút.", function ($message) use ($user) {
-        //     $message->to($user->email)->subject('Mã OTP Xác Thực - Clothes Store');
-        // });
-
-        return redirect()->route('otp.verify.form')->with('message', 'Mật khẩu đúng! Kiểm tra email để lấy mã OTP.');
-    }
-
-    // Hiển thị form verify OTP
-    public function showVerifyForm()
-    {
-        $email = session('email');
-        if (!$email) {
-            return redirect('/login')->with('error', 'Vui lòng đăng nhập trước!');
-        }
-
-        return view('auth.verify', compact('email'));
-    }
-
-    // Verify OTP (kiểm tra mã, login nếu đúng)
-    public function verifyOtp(Request $request)
+    /**
+     * Đăng nhập bằng email và mật khẩu (không sử dụng OTP).
+     *
+     * Mô tả:
+     * - Xác thực dữ liệu đầu vào.
+     * - Nếu thành công, kiểm tra vai trò người dùng và chuyển hướng đến trang tương ứng.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+   
+    // Đăng nhập chuẩn (email + password, không OTP)
+    public function loginStandard(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
-            'otp' => 'required|digits:6',
+            'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        if (Auth::attempt($request->only('email', 'password'))) {
+            $request->session()->regenerate();
+
+            $user = Auth::user();
+            if ($user->hasRole('admin')) {
+                return redirect('/admin/dashboard');  // Admin nhảy dashboard
+            }
+
+            return redirect()->intended('/');  // User thường về trang chủ
+        }
+
+        return back()->withErrors([
+            'email' => 'Email hoặc mật khẩu không đúng.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Hiển thị form xác thực OTP (chung cho login và register).
+     *
+     * Mô tả:
+     * - Kiểm tra xem người dùng đã đăng nhập hay chưa thông qua session.
+     * - Xác định loại xác thực (đăng nhập hoặc đăng ký).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function showVerifyForm(Request $request)
+    {
+        $email = session('email') ?? session('register_email');  // Lấy email từ session
+        if (!$email) {
+            return redirect('/login')->with('error', 'Vui lòng đăng nhập trước!');  // Nếu không có email, redirect về đăng nhập
+        }
+
+        $type = session('otp_type', 'login'); // Xác định loại xác thực (mặc định là 'login')
+
+        return view('auth.verify', compact('email', 'type'));  // Trả về view xác thực OTP với email và loại
+    }
+
+    /**
+     * Xác thực mã OTP.
+     *
+     * Mô tả:
+     * - Xác thực dữ liệu đầu vào và kiểm tra mã OTP của người dùng.
+     * - Nếu OTP hợp lệ, đăng nhập người dùng và xóa session liên quan.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function verifyOtp(Request $request)
+    {
+        // Xác thực dữ liệu đầu vào
+        $request->validate([
+            'email' => 'required|email',  // Email bắt buộc và hợp lệ
+            'otp' => 'required|digits:6',  // Mã OTP phải là 6 chữ số
+        ]);
+
+        // Tìm người dùng theo email
+        $user = User::where('email', $request->email)->first();  
 
         if (!$user) {
-            return back()->with('error', 'Email không tồn tại!');
+            return back()->with('error', 'Email không tồn tại!');  // Nếu không tìm thấy người dùng
         }
 
+        // Kiểm tra mã OTP
         if ($user->verifyOtp($request->otp)) {
-            Auth::login($user);  // Login thật
-            $user->otp_code = null;
-            $user->otp_expires = null;
-            $user->save();
+            $user->otp_code = null;  // Xóa mã OTP
+            $user->otp_expires = null;  // Xóa thời gian hết hạn
+            $user->save();  // Lưu thay đổi vào cơ sở dữ liệu
 
-            //cái này nếu thành công trỏ tới view/admin/dashboard
-            return redirect('/admin/dashboard')->with('success', 'Đăng nhập thành công!');
+            Auth::login($user);  // Đăng nhập người dùng
+
+            // Xóa session liên quan
+            $request->session()->forget(['email', 'register_email', 'otp_type']);
+
+            return redirect('/')->with('success', 'Đăng nhập thành công!');  // Chuyển hướng về trang chủ với thông báo thành công
         }
 
-        return back()->with('error', 'OTP sai hoặc hết hạn!');
+        return back()->with('error', 'OTP sai hoặc hết hạn!');  // Nếu OTP không hợp lệ
     }
-     public function logout(Request $request)
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
 
-        return redirect()->route('login')
-            ->with('success', 'Đăng xuất thành công!');
+    /**
+     * Đăng xuất người dùng.
+     *
+     * Mô tả:
+     * - Đăng xuất người dùng và xóa session.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();  // Đăng xuất người dùng
+        $request->session()->invalidate();  // Xóa session
+        $request->session()->regenerateToken();  // Tạo lại CSRF token để bảo mật
+
+        return redirect()->route('login')->with('success', 'Đăng xuất thành công!');  // Chuyển hướng về trang đăng nhập
     }
-    
 }

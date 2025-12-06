@@ -4,27 +4,22 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Auth\RegisterController;
 
-
-// Routes đăng nhập (email + pass trước, sau OTP)
-Route::get('/login', [OtpController::class, 'showForm'])->name('login');  // GET form
-Route::post('/login', [OtpController::class, 'loginAttempt'])->name('login.attempt');  // POST attempt pass
-
-// Routes verify OTP
-Route::get('/verify-otp', [OtpController::class, 'showVerifyForm'])->name('otp.verify.form');  // GET form verify
-Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('otp.verify');  // POST xử lý OTP
-
-// Routes đăng ký
+// Routes công khai (không cần login)
+Route::get('/login', [OtpController::class, 'showForm'])->name('login');
+Route::post('/login', [OtpController::class, 'loginStandard'])->name('login');
 Route::get('/register', [RegisterController::class, 'showForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
+Route::post('/logout', [OtpController::class, 'logout'])->name('logout');
 
-// Dashboard sau login
-Route::middleware('auth')->get('/', function () {
-    return view('home');
+// Group routes cần login (redirect /login nếu chưa auth)
+Route::middleware('auth')->group(function () {
+    Route::get('/', function () {
+        return view('home');  // Trang chủ sau login
+    });
+
+    // Routes admin (đã có 'admin' middleware từ trước)
+    Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+        Route::resource('/products', ProductController::class);
+    });
 });
-    
-
-// Logout
-Route::post('/logout', function () {
-    auth()->logout();
-    return redirect('/login');
-})->name('logout');

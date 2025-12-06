@@ -12,7 +12,7 @@
             <div class="col-md-6">
                 <div class="card mt-5">
                     <div class="card-header bg-success text-white text-center">
-                        <h3>Xác Thực OTP</h3>
+                        <h3>Xác Thực OTP {{ $type == 'register' ? 'Đăng Ký' : 'Đăng Nhập' }}</h3>
                         <p>Gửi đến: {{ $email }}</p>
                     </div>
                     <div class="card-body">
@@ -35,7 +35,7 @@
                             <button type="submit" class="btn btn-success w-100">Xác Thực</button>
                         </form>
                         <div class="text-center mt-3">
-                            <a href="{{ route('login') }}" class="btn btn-secondary">Quay lại</a>
+                            <a href="{{ route('login') }}" class="btn btn-secondary">Quay Lại Đăng Nhập</a>
                         </div>
                     </div>
                 </div>

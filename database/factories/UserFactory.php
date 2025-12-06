@@ -12,33 +12,41 @@ use Illuminate\Support\Str;
 class UserFactory extends Factory
 {
     /**
-     * The current password being used by the factory.
+     * Mật khẩu hiện tại đang được sử dụng bởi factory.
      */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Định nghĩa trạng thái mặc định cho mô hình.
+     *
+     * Mô tả:
+     * - Xây dựng và trả về một mảng các thuộc tính mặc định cho mô hình User.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'name' => fake()->name(),  // Tên người dùng ngẫu nhiên
+            'email' => fake()->unique()->safeEmail(),  // Email ngẫu nhiên, duy nhất
+            'email_verified_at' => now(),  // Thời điểm xác thực email, đặt thành thời gian hiện tại
+            'password' => static::$password ??= Hash::make('password'),  // Mật khẩu mặc định đã được hash
+            'remember_token' => Str::random(10),  // Token ngẫu nhiên cho tính năng "ghi nhớ đăng nhập"
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Chỉ định rằng địa chỉ email của mô hình sẽ không được xác thực.
+     *
+     * Mô tả:
+     * - Trả về một trạng thái mà địa chỉ email không có thời gian xác thực.
+     *
+     * @return static
      */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'email_verified_at' => null,  // Đặt thời gian xác thực email thành null
         ]);
     }
 }
