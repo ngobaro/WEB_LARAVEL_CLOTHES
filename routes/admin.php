@@ -5,7 +5,8 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\DiscountsController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\PaymentsController; // THÊM PAYMENTS
+use App\Http\Controllers\Admin\PaymentsController;
+use App\Http\Controllers\Admin\UsersController;
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
@@ -19,11 +20,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Discounts
     Route::resource('/discounts', DiscountsController::class);
     
-    // Payments - CHỈ XEM VÀ THỐNG KÊ
+    // Users - CHỈ customer và admin
+    Route::resource('/users', UsersController::class)->except(['show']); // Không dùng show nếu không cần
+    
+    // Payments
     Route::get('/payments', [PaymentsController::class, 'index'])->name('payments.index');
     Route::get('/payments/revenue', [PaymentsController::class, 'revenue'])->name('payments.revenue');
     Route::get('/payments/{payment}', [PaymentsController::class, 'show'])->name('payments.show');
     Route::put('/payments/{payment}/status', [PaymentsController::class, 'updateStatus'])->name('payments.updateStatus');
-    
-    // KHÔNG CÓ: payments.create, payments.store, payments.edit, payments.update, payments.destroy
 });

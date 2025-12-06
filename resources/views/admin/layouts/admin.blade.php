@@ -70,7 +70,7 @@
             <a href="" class="{{ request()->is('admin/reviews*') ? 'active' : '' }}">
                 <i class="fas fa-star"></i> <span>Đánh giá</span>
             </a>
-            <a href="" class="{{ request()->is('admin/users*') ? 'active' : '' }}">
+            <a href="{{ route('admin.users.index') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">
                 <i class="fas fa-users"></i> <span>Người Dùng</span>
             </a>
             <hr class="my-4 border-secondary">
